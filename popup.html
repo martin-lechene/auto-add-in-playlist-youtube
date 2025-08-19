@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Quick Save Config</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        padding: 10px;
+        min-width: 300px;
+      }
+      .playlist-item {
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        padding: 8px;
+        margin-bottom: 8px;
+      }
+      label {
+        display: block;
+        font-size: 12px;
+        margin-top: 4px;
+      }
+      input,
+      select {
+        width: 100%;
+        padding: 4px;
+        margin-top: 2px;
+      }
+      button {
+        margin-top: 6px;
+        background: #3ea6ff;
+        border: none;
+        padding: 6px 10px;
+        color: white;
+        cursor: pointer;
+        border-radius: 4px;
+      }
+      .delete-btn {
+        background: #ff4d4d;
+        float: right;
+      }
+    </style>
+  </head>
+  <body>
+    <h3>Configurer les playlists rapides</h3>
+    <div id="playlist-list"></div>
+    <button id="addBtn">➕ Ajouter une playlist</button>
+    <script src="popup.js"></script>
+  </body>
+</html>

@@ -1,23 +1,45 @@
 {
   "manifest_version": 3,
   "name": "YouTube Quick Save",
-  "short_name": "YTSave",
-  "icons": {
-    "16": "icons/icon16.png",
-    "48": "icons/icon48.png",
-    "128": "icons/icon128.png"
-  },
-  "author": "https://github.com/martin-lechene",
-  "version": "1.0",
-  "description": "Ajoute des boutons rapides pour enregistrer une vidéo dans des playlists spécifiques.",
-  "permissions": ["scripting", "activeTab"],
-  "action": {
-    "default_popup": "popup.html"
-  },
+  "version": "2.0",
+  "description": "Boutons rapides et raccourcis clavier pour ajouter des vidéos YouTube dans des playlists.",
+  "permissions": ["scripting", "activeTab", "storage"],
   "content_scripts": [
     {
       "matches": ["*://www.youtube.com/*"],
       "js": ["content.js"]
     }
-  ]
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "commands": {
+    "quick-save-1": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+1"
+      },
+      "description": "Ajout rapide playlist 1"
+    },
+    "quick-save-2": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+2"
+      },
+      "description": "Ajout rapide playlist 2"
+    },
+    "quick-save-3": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+3"
+      },
+      "description": "Ajout rapide playlist 3"
+    },
+    "quick-save-4": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+4"
+      },
+      "description": "Ajout rapide playlist 4"
+    }
+  }
 }

@@ -1,12 +1,8 @@
-// === CONFIG DES PLAYLISTS (modifiable) ===
-const playlists = ["Musiques", "Documentaires", "Learn"];
-
-// === Attente que le DOM soit prêt ===
+// Utilitaire pour attendre un élément
 function waitForElm(selector) {
   return new Promise((resolve) => {
-    if (document.querySelector(selector)) {
+    if (document.querySelector(selector))
       return resolve(document.querySelector(selector));
-    }
     const observer = new MutationObserver(() => {
       if (document.querySelector(selector)) {
         resolve(document.querySelector(selector));
@@ -17,75 +13,90 @@ function waitForElm(selector) {
   });
 }
 
-// === Fonction qui ajoute les boutons rapides ===
+// Ajout des boutons sous la vidéo
 async function addQuickButtons() {
   const saveBtn = await waitForElm('button[aria-label*="Enregistrer"]');
+  if (!saveBtn || document.querySelector(".quick-save-container")) return;
 
-  if (document.querySelector(".quick-save-container")) return; // éviter doublons
+  chrome.storage.sync.get({ playlists: [] }, (data) => {
+    const container = document.createElement("div");
+    container.className = "quick-save-container";
+    container.style.display = "flex";
+    container.style.gap = "6px";
+    container.style.marginLeft = "10px";
 
-  const container = document.createElement("div");
-  container.className = "quick-save-container";
-  container.style.display = "flex";
-  container.style.gap = "6px";
-  container.style.marginLeft = "10px";
+    data.playlists.forEach((pl) => {
+      const btn = document.createElement("button");
+      btn.textContent = `${pl.icon || ""} ${pl.name}`;
+      btn.style.background = pl.color || "#3ea6ff";
+      btn.style.color = "white";
+      btn.style.border = "none";
+      btn.style.borderRadius = "6px";
+      btn.style.padding = "4px 8px";
+      btn.style.cursor = "pointer";
+      btn.addEventListener("click", () => quickSave(pl));
+      container.appendChild(btn);
+    });
 
-  playlists.forEach((plName) => {
-    const btn = document.createElement("button");
-    btn.textContent = plName;
-    btn.style.background = "#3ea6ff";
-    btn.style.color = "white";
-    btn.style.border = "none";
-    btn.style.borderRadius = "6px";
-    btn.style.padding = "4px 8px";
-    btn.style.cursor = "pointer";
-
-    btn.addEventListener("click", () => quickSave(plName));
-    container.appendChild(btn);
+    saveBtn.parentNode.appendChild(container);
   });
-
-  // Insérer les boutons juste après le bouton "Enregistrer"
-  saveBtn.parentNode.appendChild(container);
 }
 
-// === Fonction pour cliquer sur "Enregistrer" et choisir la playlist ===
-async function quickSave(playlistName) {
+// Fonction qui ajoute dans une ou plusieurs playlists
+async function quickSave(pl) {
   const saveBtn = document.querySelector('button[aria-label*="Enregistrer"]');
   if (!saveBtn) return alert("Bouton Enregistrer introuvable");
 
-  saveBtn.click(); // ouvrir la popup
-
-  // attendre la popup
+  saveBtn.click();
   const popup = await waitForElm(
     "ytd-add-to-playlist-renderer, tp-yt-paper-dialog"
   );
 
   setTimeout(() => {
     const items = [...document.querySelectorAll("yt-formatted-string")];
-    const target = items.find((el) => el.innerText.trim() === playlistName);
 
-    if (target) {
-      target.click(); // cliquer sur la playlist
-      console.log(`✅ Ajouté à la playlist: ${playlistName}`);
+    // Playlist principale
+    const target = items.find((el) => el.innerText.trim() === pl.name);
+    if (target) target.click();
 
-      // fermer popup
-      const closeBtn = document.querySelector(
-        'yt-icon-button[aria-label="Fermer"]'
-      );
-      if (closeBtn) closeBtn.click();
-    } else {
-      alert(`❌ Playlist "${playlistName}" introuvable`);
+    // Multi playlists
+    if (pl.multi && pl.multi.length) {
+      pl.multi.forEach((name) => {
+        const extra = items.find((el) => el.innerText.trim() === name);
+        if (extra) extra.click();
+      });
     }
+
+    // Fermer popup
+    const closeBtn = document.querySelector(
+      'yt-icon-button[aria-label="Fermer"]'
+    );
+    if (closeBtn) closeBtn.click();
+
+    console.log(
+      `✅ Ajouté à : ${pl.name} ${
+        pl.multi && pl.multi.length ? "+ " + pl.multi.join(", ") : ""
+      }`
+    );
   }, 500);
 }
 
-// === Lancer l’injection des boutons quand on est sur une page vidéo ===
-function init() {
-  if (location.pathname.startsWith("/watch")) {
-    addQuickButtons();
+// Ecoute des raccourcis clavier
+chrome.runtime.onMessage.addListener((msg) => {
+  if (msg.type === "command") {
+    chrome.storage.sync.get({ playlists: [] }, (data) => {
+      const pl = data.playlists.find((p) => p.shortcut === msg.command);
+      if (pl) quickSave(pl);
+    });
   }
+});
+
+// Initialisation
+function init() {
+  if (location.pathname.startsWith("/watch")) addQuickButtons();
 }
 
-// Détection navigation YouTube (car SPAs → pas de reload)
+// Suivi navigation SPA
 let lastUrl = location.href;
 new MutationObserver(() => {
   const url = location.href;
